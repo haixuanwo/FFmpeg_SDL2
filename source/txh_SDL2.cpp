@@ -5,72 +5,96 @@
 #define BREAK_EVENT  (SDL_USEREVENT + 2)
 
 int CSDL2::thread_exit = 0;
-int CSDL2::playDelay = 40; // 帧率25，播放频率1000/25=40ms
+int CSDL2::playDelay = 40; // 25fps=40ms
 
 CSDL2::CSDL2()
 {
-	buf_c = (unsigned char*)malloc(1024*500);
+
 }
 
-int CSDL2::initSDL2(int weith, int height)
+int CSDL2::initSDL2(int weith, int height, PlayMode playMode)
 {
-	screen_w = weith*2;
-	screen_h = height*2;
-	pixel_w  = weith*2;
-	pixel_h  = height*2;
+	//SDL_DisplayMode DM;
+	//SDL_GetCurrentDisplayMode(0, &DM);
 
-	// 主屏大小
-	sdlRectDst.x = 0;  
-	sdlRectDst.y = 0;  
-	sdlRectDst.w = screen_w;  
+	this->playMode = playMode;
+
+	switch (playMode)
+	{
+		case ONE_SCREEN:
+		{
+			screen_w = weith;
+			screen_h = height;
+			pixel_w  = weith;
+			pixel_h  = height;
+			break;
+		}
+		case TWO_SCREEN:
+		{
+			break;
+		}
+		case FOUR_SCREEN:
+		{
+			screen_w = weith*2;
+			screen_h = height*2;
+			pixel_w  = weith*2;
+			pixel_h  = height*2;
+
+			sdlRect1.x = 0;
+			sdlRect1.y = 0;
+			sdlRect1.w = weith;
+			sdlRect1.h = height;
+
+			sdlRect2.x = weith;
+			sdlRect2.y = 0;
+			sdlRect2.w = weith;
+			sdlRect2.h = height;
+
+			sdlRect3.x = 0;
+			sdlRect3.y = height;
+			sdlRect3.w = weith;
+			sdlRect3.h = height;
+
+			sdlRect4.x = weith;
+			sdlRect4.y = height;
+			sdlRect4.w = weith;
+			sdlRect4.h = height;
+			break;
+		}
+		default:
+		{
+			printf("error play mode");
+			return -1;
+		}
+	}
+
+	sdlRectDst.x = 0;
+	sdlRectDst.y = 0;
+	sdlRectDst.w = screen_w;
 	sdlRectDst.h = screen_h;
 
-	// 第一个视频
-	sdlRect1.x = 0;  
-	sdlRect1.y = 0;  
-	sdlRect1.w = weith;  
-	sdlRect1.h = height; 
-
-	// 第二个视频
-	sdlRect2.x = weith;  
-	sdlRect2.y = 0;  
-	sdlRect2.w = weith;  
-	sdlRect2.h = height;
-
-	// 第三个视频
-	sdlRect3.x = 0;  
-	sdlRect3.y = height;  
-	sdlRect3.w = weith;  
-	sdlRect3.h = height; 
-
-	// 第四个视频
-	sdlRect4.x = weith;  
-	sdlRect4.y = height;  
-	sdlRect4.w = weith;  
-	sdlRect4.h = height;	
+	printf("screen_w[%d] screen_h[%d] pixel_w[%d] pixel_h[%d]\n", screen_w, screen_h, pixel_w, pixel_h);
 
 	if(SDL_Init(SDL_INIT_VIDEO))
-	{  
-		printf( "Could not initialize SDL - %s\n", SDL_GetError()); 
+	{
+		printf( "Could not initialize SDL - %s\n", SDL_GetError());
 		return -1;
 	}
-	
+
 	//SDL 2.0 Support for multiple windows
-	screen = SDL_CreateWindow("Simplest Video Play SDL2", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+	screen = SDL_CreateWindow("Clark play happy", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		sdlRectDst.w, sdlRectDst.h,SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
-	if(!screen) {  
-		printf("SDL: could not create window - exiting:%s\n",SDL_GetError());  
+	if(!screen) {
+		printf("SDL: could not create window - exiting:%s\n",SDL_GetError());
 		return -1;
 	}
-	
+
 	sdlRenderer = SDL_CreateRenderer(screen, -1, 0);
+	Uint32 pixformat = SDL_PIXELFORMAT_IYUV;
+	sdlTexture = SDL_CreateTexture(sdlRenderer, pixformat, SDL_TEXTUREACCESS_STREAMING, pixel_w, pixel_h);
 
-	Uint32 pixformat=0;
-	pixformat= SDL_PIXELFORMAT_IYUV;
-	sdlTexture = SDL_CreateTexture(sdlRenderer,pixformat, SDL_TEXTUREACCESS_STREAMING,pixel_w,pixel_h);
-
-	refresh_thread = SDL_CreateThread(refresh_video,NULL,NULL);
-	
+	refresh_thread = SDL_CreateThread(refresh_video, nullptr, nullptr);
+	return 0;
 }
 
 int CSDL2::playFrame(unsigned char *buf)
@@ -82,41 +106,18 @@ int CSDL2::playFrame(unsigned char *buf)
 		{
 			break;
 		}
-		else if(event.type==SDL_WINDOWEVENT)
+		else if(event.type == SDL_WINDOWEVENT)
 		{
-			// 获得调试窗口后的尺寸
-			SDL_GetWindowSize(screen,&screen_w,&screen_h);
+			if (SDL_WINDOWEVENT_CLOSE == event.window.event)
+			{
+				thread_exit=1;
+				return -1;
+			}
 
-			// 主屏
-			sdlRectDst.x = 0;  
-			sdlRectDst.y = 0;  
-			sdlRectDst.w = screen_w;  
+			SDL_GetWindowSize(screen, &screen_w, &screen_h);
+
+			sdlRectDst.w = screen_w;
 			sdlRectDst.h = screen_h;
-
-			// 第一个视频
-			sdlRect1.x = 0;  
-			sdlRect1.y = 0;  
-			sdlRect1.w = screen_w/2;  
-			sdlRect1.h = screen_h/2; 
-
-			// 第二个视频
-			sdlRect2.x = screen_w/2;  
-			sdlRect2.y = 0;  
-			sdlRect2.w = screen_w/2;  
-			sdlRect2.h = screen_h/2;
-
-			// 第三个视频
-			sdlRect3.x = 0;  
-			sdlRect3.y = screen_h/2;  
-			sdlRect3.w = screen_w/2;  
-			sdlRect3.h = screen_h/2; 
-
-			// 第四个视频
-			sdlRect4.x = screen_w/2;  
-			sdlRect4.y = screen_h/2;  
-			sdlRect4.w = screen_w/2;  
-			sdlRect4.h = screen_h/2;
-			
 		}
 		else if(event.type==SDL_QUIT)
 		{
@@ -128,19 +129,21 @@ int CSDL2::playFrame(unsigned char *buf)
 			return -1;
 		}
 	}
-	
 
-	// 将视频数据放在四个不同的位置
-	SDL_UpdateTexture( sdlTexture, &sdlRect1, buf, pixel_w/2);
-	SDL_UpdateTexture( sdlTexture, &sdlRect2, buf, pixel_w/2);	
-	SDL_UpdateTexture( sdlTexture, &sdlRect3, buf, pixel_w/2);
-	SDL_UpdateTexture( sdlTexture, &sdlRect4, buf, pixel_w/2);
+	if (FOUR_SCREEN == playMode)
+	{
+		SDL_UpdateTexture(sdlTexture, &sdlRect1, buf, pixel_w/2);
+		SDL_UpdateTexture(sdlTexture, &sdlRect2, buf, pixel_w/2);
+		SDL_UpdateTexture(sdlTexture, &sdlRect3, buf, pixel_w/2);
+		SDL_UpdateTexture(sdlTexture, &sdlRect4, buf, pixel_w/2);
+	}
+	else if (ONE_SCREEN == playMode)
+	{
+		SDL_UpdateTexture( sdlTexture, nullptr, buf, pixel_w);
+	}
 
-	// 将要显示的画面copy到渲染器
-	SDL_RenderClear( sdlRenderer );    
-	SDL_RenderCopy( sdlRenderer, sdlTexture, NULL, &sdlRectDst);
-
-	// 显示画面
+	SDL_RenderClear(sdlRenderer);
+	SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, &sdlRectDst);
 	SDL_RenderPresent(sdlRenderer);
 	return 0;
 }
@@ -154,7 +157,7 @@ int CSDL2::refresh_video(void *opaque)
 		SDL_PushEvent(&event);
 		SDL_Delay(playDelay);
 	}
-	
+
 	thread_exit=0;
 	SDL_Event event;
 	event.type = BREAK_EVENT;
@@ -163,9 +166,7 @@ int CSDL2::refresh_video(void *opaque)
 	return 0;
 }
 
-
 CSDL2::~CSDL2()
 {
 	SDL_Quit();
 }
-
