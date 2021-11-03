@@ -3,7 +3,7 @@
  * @Email: haixuanwoTxh@gmail.com
  * @Date: 2021-11-03 12:46:36
  * @LastEditors: Clark
- * @LastEditTime: 2021-11-03 18:47:12
+ * @LastEditTime: 2021-11-03 20:09:14
  * @Description: file content
  */
 
@@ -26,6 +26,7 @@ public:
 	int FFmpeg_read_frame(unsigned char* data, int &len);
 	unsigned short get_width();
     unsigned short get_height();
+	unsigned int get_fps();
 	~CFFmpeg();
 
 private:

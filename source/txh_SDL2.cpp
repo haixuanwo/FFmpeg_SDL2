@@ -5,17 +5,16 @@
 #define BREAK_EVENT  (SDL_USEREVENT + 2)
 
 int CSDL2::thread_exit = 0;
-int CSDL2::playDelay = 40; // 25fps=40ms
+unsigned int CSDL2::playDelay = 40; // 25fps=40ms
 
 CSDL2::CSDL2()
 {
 
 }
 
-int CSDL2::initSDL2(int weith, int height, PlayMode playMode)
+int CSDL2::initSDL2(int weith, int height, PlayMode playMode, unsigned int fps)
 {
-	//SDL_DisplayMode DM;
-	//SDL_GetCurrentDisplayMode(0, &DM);
+	playDelay = 1000/fps;	// 每一帧视频数据播放的时间ms
 
 	this->playMode = playMode;
 

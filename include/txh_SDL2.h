@@ -3,7 +3,7 @@
  * @Email: haixuanwoTxh@gmail.com
  * @Date: 2021-11-03 12:47:42
  * @LastEditors: Clark
- * @LastEditTime: 2021-11-03 18:49:23
+ * @LastEditTime: 2021-11-03 20:04:40
  * @Description: file content
  */
 
@@ -27,7 +27,7 @@ class CSDL2
 {
 public:
 	CSDL2();
-	int initSDL2(int weith, int height, PlayMode playMode);
+	int initSDL2(int weith, int height, PlayMode playMode, unsigned int fps);
 	int playFrame(unsigned char *buf);
 	static int refresh_video(void *opaque);
 	~CSDL2();
@@ -37,7 +37,7 @@ public:
 	int pixel_w;
 	int pixel_h;
 
-	static int playDelay;
+	static unsigned int playDelay;
 private:
 	SDL_Window *screen;
 	SDL_Renderer *sdlRenderer;

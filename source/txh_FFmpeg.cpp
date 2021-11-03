@@ -105,6 +105,14 @@ unsigned short CFFmpeg::get_height()
 	return pCodecCtx->height;
 }
 
+unsigned int CFFmpeg::get_fps()
+{
+	unsigned int fps = pCodecCtx->framerate.num/pCodecCtx->framerate.den;
+	fps += (pCodecCtx->framerate.num%pCodecCtx->framerate.den ? 1 : 0);
+
+	return fps;
+}
+
 CFFmpeg::~CFFmpeg()
 {
 	sws_freeContext(img_convert_ctx);

@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	CFFmpeg ffmpeg(fileName);
 
 	CSDL2 sdl;
-	sdl.initSDL2(ffmpeg.get_width(), ffmpeg.get_height(), playMode);
+	sdl.initSDL2(ffmpeg.get_width(), ffmpeg.get_height(), playMode, ffmpeg.get_fps());
 
 	while(1)
 	{
